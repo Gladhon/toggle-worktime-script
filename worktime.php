@@ -1,5 +1,12 @@
 <?php
 
+function getenvdefault($name, ?string $default = null): ?string {
+    if (($result = getenv($name)) === false) {
+        return $default;
+    }
+    return $result;
+}
+
 function getHolidays($year)
 {
     $easterDate = easter_date($year);
@@ -126,7 +133,9 @@ printHours('last Sunday -1 week', 'last Sunday -1 week +6 days');
 
 $total = 0;
 $thisYear= date('Y');
-for ($year=2017; $year <= $thisYear; $year++){
+$startYear = intval(getenvdefault('TOGGL_START_YEAR', '2017'));
+
+for ($year=$startYear; $year <= $thisYear; $year++){
     $notHere = (int) getenv('TOGGL_AWAY_'.$year);
     $notHere *= 8;
     if($year == $thisYear){
