@@ -235,10 +235,11 @@ $total = 0;
 $thisYear = (int) date('Y');
 $startYear = (int) (new DateTimeImmutable($config['START_DATE']))->format('Y');
 for ($year = $startYear; $year <= $thisYear; $year++) {
+    $mod = $config['MODIFICATIONS'][$year] ?? 0.0;
     if ($year === $thisYear) {
-        $total += printHours('01.01.'.$year, 'yesterday', $config);
+        $total += printHours('01.01.'.$year, 'yesterday', $config, $mod);
     } else {
-        $total += printHours('01.01.'.$year, '31.12.'.$year, $config);
+        $total += printHours('01.01.'.$year, '31.12.'.$year, $config, $mod);
     }
 }
 

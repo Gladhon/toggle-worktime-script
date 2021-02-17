@@ -17,6 +17,9 @@ return [
                                         ],
                                     ],
                                 ],
+    'MODIFICATIONS'         =>  [
+                                     2020 => 0.0 // special changes etc.
+                                 ],
 ];
 
 
