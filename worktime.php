@@ -184,6 +184,10 @@ function countVacationDays(DateTime $since, DateTime $until, array $config): flo
         if ($from < $since) {
             continue;
         }
+        if (isset($vacation['DAYS'])) {
+            $vacationDays += $vacation['DAYS'] * 8;
+            continue;
+        }
         while ($from <= $vacation['UNTIL']) {
             if ($from <= $until) {
                 $vacationDays += hoursToWorkAtDay($hdays, $halfDays, $daysOff, $halfDaysOff, $from);

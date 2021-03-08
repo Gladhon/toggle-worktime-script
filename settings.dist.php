@@ -14,6 +14,7 @@ return [
                                         [   // one entry for each vacation in year
                                             'FROM' => null,  //Datetime, e.g.new DateTime('1-1-2020');
                                             'UNTIL' => null, //timestamp, e.g. new DateTime('2-1-2020');
+                                            // days => 1.4 additional float, override the days-calculator, for partial/special days vacation
                                         ],
                                     ],
                                 ],
