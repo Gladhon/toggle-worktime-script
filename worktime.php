@@ -23,7 +23,7 @@ function getHolidays(int $year): array
         mktime(0, 0, 0, $easterMonth, $easterDay - 2, $easterYear), //karfreitag
         mktime(0, 0, 0, $easterMonth, $easterDay + 1, $easterYear), //ostermontag
         mktime(0, 0, 0, $easterMonth, $easterDay + 39, $easterYear), //auffahrt
-        mktime(0, 0, 0, $easterMonth, $easterDay + 51, $easterYear), //pfingst-montag
+        mktime(0, 0, 0, $easterMonth, $easterDay + 50, $easterYear), //pfingst-montag
     ];
 }
 
