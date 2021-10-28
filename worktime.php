@@ -242,7 +242,7 @@ for ($year = $startYear; $year <= $thisYear; $year++) {
     $mod = $config['MODIFICATIONS'][$year] ?? 0.0;
     if ($year === $thisYear) {
         $start = '01.01.'.$year;
-        if(new DateTimeImmutable($config['START_DATE']) > $start ){
+        if(new DateTimeImmutable($config['START_DATE']) > new DateTimeImmutable($start) ){
             $start = $config['START_DATE'];
         }
         $total += printHours($start, 'yesterday', $config, $mod);
