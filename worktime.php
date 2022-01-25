@@ -87,7 +87,7 @@ function totalHours(DateTime $sinceDate, DateTime $untilDate, $config): float
 {
     $since = $sinceDate->format('Y-m-d');
     $until = $untilDate->format('Y-m-d');
-    $url = 'https://toggl.com/reports/api/v2/summary?type=me&workspace_id=1006502&since='.$since.'&until='.$until.'&user_ids='.$config['TOGGL_USER_IDS'].'&user_agent='.$config['TOGGL_USER_AGENT'];
+    $url = 'https://api.track.toggl.com/reports/api/v2/summary?type=me&workspace_id=1006502&since='.$since.'&until='.$until.'&user_ids='.$config['TOGGL_USER_IDS'].'&user_agent='.$config['TOGGL_USER_AGENT'];
     $command = ' curl -s  -u '.$config['TOGGL_API_TOKEN'].':api_token GET "'.$url.'" ';
 
     $json = exec($command);
