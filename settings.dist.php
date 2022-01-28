@@ -6,8 +6,8 @@ return [
     'TOGGL_USER_IDS'        => '',      // your toggl id from profile.json
     'DISPLAY_DATE_FORMAT'   => 'd.m.Y',      // optional, a format to display the dates on readout e.g. 'Y-m-d' or 'd.m.Y', etc.
     'START_DATE'            => '',    // optional, 2017 by default, the year you started
-    'DAYS_OFF'              => [],       // to configure part time work, weekly  days off, enter the day number for each day as array entry (1 = monday, 2 = tuesday, ...)
-    'HALF_DAYS_OFF'         => [],       // to configure part time work, weekly half days off, enter the day number for each day as array entry (1 = monday, 2 = tuesday, ...)
+    'DAYS_OFF'              => [],       // to configure part time work, weekly  days off, enter the day number for each day as array entry (1 = monday, 2 = tuesday, ...) and the date range config, i.e. [5 => ['FROM' => new \DateTimeImmutable('01.01.2022'), 'UNTIL' => new \DateTimeImmutable()]]
+    'HALF_DAYS_OFF'         => [],       // to configure part time work, weekly half days off, enter the day number for each day as array entry (1 = monday, 2 = tuesday, ...) and the date range config, i.e. [5 => ['FROM' => new \DateTimeImmutable('01.01.2022'), 'UNTIL' => new \DateTimeImmutable()]]
     'VACATION_DAYS_AMOUNT'  => 5*5,     // 5 weeks à 5 days
     'VACATION'              => [    // one entry for each year
                                     2020 => [
