@@ -103,11 +103,11 @@ function hoursToWork(DateTime $since, DateTime $until, array $config): float
     if ($since < $sinceStart) {
         $since = $sinceStart;
     }
-    $daysOff = array_key_exists('DAYS_OFF', $config) ? $config['DAYS_OFF'] : [];
-    $halfDaysOff = array_key_exists('HALF_DAYS_OFF', $config) ? $config['HALF_DAYS_OFF'] : [];
 
     $days = 0;
     while ($since <= $until) {
+        $daysOff = getDaysOff($since, $config['DAYS_OFF'] ?? []);
+        $halfDaysOff = getDaysOff($since, $config['HALF_DAYS_OFF'] ?? []);
         $w = (int) $since->format('w');
         if ($w !== 0 && $w !== 6 && !in_array($w, $daysOff, true)) {
             $hdays = getHolidays((int) $since->format('Y'));
@@ -169,8 +169,7 @@ function countVacationDays(DateTime $since, DateTime $until, array $config): flo
 
         return array_sum($vacations) * 8;
     }
-    $daysOff = array_key_exists('DAYS_OFF', $config) ? $config['DAYS_OFF'] : [];
-    $halfDaysOff = array_key_exists('HALF_DAYS_OFF', $config) ? $config['HALF_DAYS_OFF'] : [];
+
     $hdays = getHolidays($year);
     $halfDays = getHalfHolidays($year);
     foreach ($config['VACATION'][$year] as $vacation) {
@@ -189,6 +188,8 @@ function countVacationDays(DateTime $since, DateTime $until, array $config): flo
             continue;
         }
         while ($from <= $vacation['UNTIL']) {
+            $daysOff = getDaysOff($from, $config['DAYS_OFF'] ?? []);
+            $halfDaysOff = getDaysOff($from, $config['HALF_DAYS_OFF'] ?? []);
             if ($from <= $until) {
                 $vacationDays += hoursToWorkAtDay($hdays, $halfDays, $daysOff, $halfDaysOff, $from);
             }
@@ -226,6 +227,27 @@ function hoursToWorkAtDay(array $holidays, array $halfHolidays, array $daysOff, 
 
     return $hours;
 
+}
+
+function getDaysOff(\DateTimeInterface $since, array $config): array
+{
+    if (!$config) {
+        return [];
+    }
+
+    if (!is_array(current($config))) {
+        throw new \RuntimeException('Please adjust your DAYS_OFF or HALF_DAYS_OFF config in your settings to the new format.');
+    }
+
+    return array_keys(
+        array_filter(
+            $config,
+            static fn(array $activeDateRange): bool => $activeDateRange['FROM'] instanceof \DateTimeInterface
+                && $activeDateRange['UNTIL'] instanceof \DateTimeInterface
+                && $since >= $activeDateRange['FROM']
+                && $since <= $activeDateRange['UNTIL']
+        )
+    );
 }
 
 echo "\n";
