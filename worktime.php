@@ -62,8 +62,12 @@ function getUserInfos(): array
     if (!$user) {
         $user = 'settings';
     }
+    $dataDir = getenv('GOTOM_DATA_DIR');
+    if (!$dataDir) {
+        $dataDir = __DIR__;
+    }
 
-    $config = require __DIR__.'/'.$user.'.php';
+    $config = require $dataDir.'/'.$user.'.php';
     $token = getenv('TOGGL_TOKEN');
     if ($token) {
         $config['TOGGL_API_TOKEN'] = $token;
@@ -252,6 +256,7 @@ function getDaysOff(\DateTimeInterface $since, array $config): array
 
 echo "\n";
 $config = getUserInfos();
+
 printHours('today', 'today', $config);
 printHours('yesterday', 'yesterday', $config);
 printHours('last Sunday', 'last Sunday +6 days', $config);
@@ -277,3 +282,4 @@ echo "\nTotal hours: ";
 printf("%01.2f \n\n", $total);
 
 printf("Overall: %01.2fh / %01.2fd \n\n", $total, $total / 8);
+
