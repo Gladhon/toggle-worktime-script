@@ -56,9 +56,9 @@ function getSechselauten($year)
     return $sechselauten;
 }
 
-function getUserInfos(): array
+function getUserInfos($user = null): array
 {
-    $user = getenv('GOTOM_USER');
+    $user = $user ?? getenv('GOTOM_USER');
     if (!$user) {
         $user = 'settings';
     }
@@ -82,6 +82,7 @@ function getUserInfos(): array
     if (!array_key_exists('TOGGL_USER_AGENT', $config)) {
         $config['TOGGL_USER_AGENT'] = 'test_api';
     }
+
 
     if ($config['EMAIL'] ?? null) {
         $calamariRows = json_decode(file_get_contents($dataDir.'/calamari.json'), true, 512, JSON_THROW_ON_ERROR);
@@ -116,6 +117,9 @@ function getUserInfos(): array
     }
 
     foreach ($config['VACATION'] as $year => $yearConfig) {
+        if (($yearConfig[0] ?? '') === 'sum') {
+          continue;
+        }
         usort($yearConfig, fn($rowA, $rowB) => $rowA['FROM'] <=> $rowB['FROM']);
 
         $lastEnd = null;
@@ -129,6 +133,9 @@ function getUserInfos(): array
     }
     if(($_SERVER['argv'][1] ?? '') === '--dump'){
         foreach ($config['VACATION'] as $year => $yearConfig) {
+            if ($yearConfig[0] === 'sum') {
+                continue;
+            }
             usort($yearConfig, fn($rowA, $rowB) => $rowA['FROM'] <=> $rowB['FROM']);
             echo "$year => [\n";
             foreach ($yearConfig as $row) {
@@ -141,6 +148,7 @@ function getUserInfos(): array
         }
         die();
     }
+
 
     return $config;
 }
@@ -292,6 +300,26 @@ function hoursToWorkAtDay(array $holidays, array $halfHolidays, array $daysOff, 
 
 }
 
+date_default_timezone_set('Europe/Zurich');
+//for ($year = 2020; $year <= 2022; $year++) {
+//    $a = getHolidays($year);
+// //   date_default_timezone_set('UTC');
+//    $n = array_shift($a);
+//    $date = new DateTime("@$n");
+//    $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
+//    echo $date->format('Y-m-d H:i:s') . "\n";
+//  $l = array_pop($a);
+//    $date = new DateTime("@$l");
+//    $date->setTimezone(new DateTimeZone(date_default_timezone_get()));
+//    echo $date->format('Y-m-d H:i:s') . "\n";
+////    echo $date->getTimestamp() . "\n";
+////    var_dump($date);
+////    $date = new DateTime("25-05-$year");
+////    echo $date->format('Y-m-d H:i:s') . "\n";
+////    echo $date->getTimestamp() . "\n";
+////    var_dump($date);
+//}
+
 function getDaysOff(\DateTimeInterface $since, array $config): array
 {
     if (!$config) {
@@ -314,12 +342,29 @@ function getDaysOff(\DateTimeInterface $since, array $config): array
 }
 
 echo "\n";
+
+if (getenv('GOTOM_USER') === 'ALL') {
+    foreach (glob(__DIR__.'/../data/*.php') as $file) {
+        $matches = [];
+        preg_match_all('|'.__DIR__.'/../data/(.*).php|', $file, $matches);
+        $name = $matches[1][0];
+
+        $config = getUserInfos($name);
+        echo $name;
+        printHours('last Sunday -1 week', 'last Sunday -1 week +6 days', $config);
+        $thisYear = (int) date('Y');
+        echo $name;
+        printHours('01.01.'.$thisYear, 'yesterday', $config, $config['MODIFICATIONS'][$thisYear] ?? 0.0);
+    }
+    die;
+}
+
 $config = getUserInfos();
 
 printHours('today', 'today', $config);
 printHours('yesterday', 'yesterday', $config);
-printHours('last Sunday', 'last Sunday +6 days', $config);
 printHours('last Sunday -1 week', 'last Sunday -1 week +6 days', $config);
+printHours('last Sunday -2 week', 'last Sunday -2 week +6 days', $config);
 
 $total = 0;
 $thisYear = (int) date('Y');
@@ -328,7 +373,7 @@ for ($year = $startYear; $year <= $thisYear; $year++) {
     $mod = $config['MODIFICATIONS'][$year] ?? 0.0;
     if ($year === $thisYear) {
         $start = '01.01.'.$year;
-        if(new DateTimeImmutable($config['START_DATE']) > new DateTimeImmutable($start) ){
+        if (new DateTimeImmutable($config['START_DATE']) > new DateTimeImmutable($start)) {
             $start = $config['START_DATE'];
         }
         $total += printHours($start, 'yesterday', $config, $mod);

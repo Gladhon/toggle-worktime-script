@@ -2,6 +2,7 @@
 
 return [
     'TOGGL_API_TOKEN'       => '',      // your toggl API Token ( OR AS ENVIROMENT VARIABLE: TOGGL_TOKEN)
+    'EMAIL'                 => '',     // your email-address, used for calamari data
     'TOGGL_USER_AGENT'      => '',      // your toggl username (GoTom-email)
     'TOGGL_USER_IDS'        => '',      // your toggl id from profile.json
     'DISPLAY_DATE_FORMAT'   => 'd.m.Y',      // optional, a format to display the dates on readout e.g. 'Y-m-d' or 'd.m.Y', etc.
