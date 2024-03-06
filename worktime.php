@@ -98,10 +98,9 @@ function getUserInfos($user = null): array
                 $calamariVacAmounts[$year] +=  (float) $row['entitlementAmount']  ;
             }
 
-
             $dateItem = [
-                'FROM' => new DateTime(substr($row['startTime'], 0, 12)),
-                'UNTIL' => new DateTime(substr($row['endTime'], 0, 12)),
+                'FROM' => new DateTime(substr($row['startTime'], 0, 10)),
+                'UNTIL' => new DateTime(substr($row['endTime'], 0, 10)),
             ];
             if (!$row['fullDayRequest']) {
                 $dateItem['DAYS'] = $row['entitlementAmount'];
@@ -203,8 +202,9 @@ function hoursToWork(DateTime $since, DateTime $until, array $config): float
 
 function printHours(string $since, string $until, array $config, float $extraO = 0): float
 {
-    $sinceDatetime = new DateTime($since);
-    $untilDatetime = new DateTime($until);
+    $sinceDatetime = new DateTime((new DateTime($since))->format('d.m.Y')) ;
+    $untilDatetime =new DateTime((new DateTime($until))->format('d.m.Y')) ;
+
     if (array_key_exists('DISPLAY_DATE_FORMAT', $config) && $config['DISPLAY_DATE_FORMAT'] !== '') {
         $since = $sinceDatetime->format($config['DISPLAY_DATE_FORMAT']);
         $until = $untilDatetime->format($config['DISPLAY_DATE_FORMAT']);
@@ -255,7 +255,9 @@ function countVacationDays(DateTime $since, DateTime $until, array $config): flo
             continue;
         }
         if (isset($vacation['DAYS'])) {
-            $vacationDays += $vacation['DAYS'] * 8;
+            if ($from <= $until) {
+                $vacationDays += $vacation['DAYS'] * 8;
+            }
             continue;
         }
         while ($from <= $vacation['UNTIL']) {
