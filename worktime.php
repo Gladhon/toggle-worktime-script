@@ -83,6 +83,65 @@ function getUserInfos(): array
         $config['TOGGL_USER_AGENT'] = 'test_api';
     }
 
+    if ($config['EMAIL'] ?? null) {
+        $calamariRows = json_decode(file_get_contents($dataDir.'/calamari.json'), true, 512, JSON_THROW_ON_ERROR);
+        $calamariRows = array_filter($calamariRows, fn($row) => $row['employeeEmail'] === $config['EMAIL']);
+        $calamariVacAmounts = [];
+        foreach ($calamariRows as $row) {
+            $year = substr($row['startTime'], 0, 4);
+
+            if ($row['absenceTypeName'] === 'Vacation days') {
+                if(!isset($calamariVacAmounts[$year])){
+                    $calamariVacAmounts[$year] = 0;
+                }
+                $calamariVacAmounts[$year] +=  (float) $row['entitlementAmount']  ;
+            }
+
+
+            $dateItem = [
+                'FROM' => new DateTime(substr($row['startTime'], 0, 12)),
+                'UNTIL' => new DateTime(substr($row['endTime'], 0, 12)),
+            ];
+            if (!$row['fullDayRequest']) {
+                $dateItem['DAYS'] = $row['entitlementAmount'];
+            }
+
+            $config['VACATION'][$year][] = $dateItem;
+        }
+
+        foreach ($calamariVacAmounts as $year => $calamariVacAmount) {
+            echo sprintf("Planned Vacation %d: %04.1f, left: %04.1f\n",$year,$calamariVacAmount, (($config['VACATION_DAYS_AMOUNT'] ?? 25) - $calamariVacAmount));
+        }
+
+    }
+
+    foreach ($config['VACATION'] as $year => $yearConfig) {
+        usort($yearConfig, fn($rowA, $rowB) => $rowA['FROM'] <=> $rowB['FROM']);
+
+        $lastEnd = null;
+        foreach ($yearConfig as $row) {
+            if ($lastEnd && $lastEnd > $row['FROM']) {
+                trigger_error('FOUND OVERLAPPING DATE_RANGES, THIS IS THE FUCKED UP ROW: '.print_r($row, true), E_USER_WARNING);
+            }
+            $lastEnd = $row['UNTIL'];
+        }
+
+    }
+    if(($_SERVER['argv'][1] ?? '') === '--dump'){
+        foreach ($config['VACATION'] as $year => $yearConfig) {
+            usort($yearConfig, fn($rowA, $rowB) => $rowA['FROM'] <=> $rowB['FROM']);
+            echo "$year => [\n";
+            foreach ($yearConfig as $row) {
+                $from = $row['FROM']->format('d.m.Y');
+                $until = $row['UNTIL']->format('d.m.Y');
+                $days = isset($row['DAYS'])  ? "'DAYS' => {$row['DAYS']}" : '' ;
+                echo "  ['FROM' => new \DateTime('$from'), 'UNTIL' => new \DateTime('$until)], $days \n";
+            }
+            echo "],\n";
+        }
+        die();
+    }
+
     return $config;
 }
 
