@@ -86,8 +86,10 @@ function getUserInfos($user = null): array
 
     if ($config['EMAIL'] ?? null) {
         $calamariRows = json_decode(file_get_contents($dataDir.'/calamari.json'), true, 512, JSON_THROW_ON_ERROR);
-        $calamariRows = array_filter($calamariRows, fn($row) => $row['employeeEmail'] === $config['EMAIL']);
+        $calamariRows = array_filter($calamariRows, fn($row) => $row['employeeEmail'] === $config['EMAIL'] && $row ['status']=== 'ACCEPTED'
+);
         $calamariVacAmounts = [];
+
         foreach ($calamariRows as $row) {
             $year = substr($row['startTime'], 0, 4);
 
