@@ -97,7 +97,13 @@ function getUserInfos($user = null): array
                 if(!isset($calamariVacAmounts[$year])){
                     $calamariVacAmounts[$year] = 0;
                 }
-                $calamariVacAmounts[$year] +=  (float) $row['entitlementAmount']  ;
+                $yearEnd = substr($row['endTime'], 0, 4);
+                if($year === $yearEnd){
+                    $calamariVacAmounts[$year] +=  (float) $row['entitlementAmount']  ;
+                }else{
+                    echo "\nWarning, there's a vacation amount of ({$row['entitlementAmount']}) for $year and $yearEnd, it will counted for $year\n\n";
+                    $calamariVacAmounts[$year] +=  (float) $row['entitlementAmount']  ;
+                }
             }
 
             $dateItem = [
