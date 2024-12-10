@@ -182,8 +182,16 @@ function hoursToWork(DateTime $since, DateTime $until, array $config): float
         $since = $sinceStart;
     }
 
-    $days = 0;
+    $hours = 0;
     while ($since <= $until) {
+        $hoursPerDay = 8;
+        if(isset($config['WORKING_HOURS'])){
+            foreach ($config['WORKING_HOURS']as $workingDayConfig) {
+                if($since >= $workingDayConfig['FROM'] && $since <= $workingDayConfig['UNTIL']){
+                    $hoursPerDay = $workingDayConfig['VALUE'];
+                }
+          }
+        }
         $daysOff = getDaysOff($since, $config['DAYS_OFF'] ?? []);
         $halfDaysOff = getDaysOff($since, $config['HALF_DAYS_OFF'] ?? []);
         $w = (int) $since->format('w');
@@ -191,21 +199,21 @@ function hoursToWork(DateTime $since, DateTime $until, array $config): float
             $hdays = getHolidays((int) $since->format('Y'));
             if (!in_array($since->getTimestamp(), $hdays, true)) {
                 $halfDays = getHalfHolidays((int) $since->format('Y'));
-                $days++;
+                $hours += $hoursPerDay;
                 if (in_array($w, $halfDaysOff, true)) {
                     // current day is a weekly half day off
-                    $days -= 0.5;
+                    $hours -= (0.5*$hoursPerDay);
                 }
                 if (in_array($since->getTimestamp(), $halfDays, true)) {
                     // current day is not  a public holiday
-                    $days -= 0.5;
+                    $hours -= (0.5*$hoursPerDay);
                 }
             }
         }
         $since->modify('+1 day');
     }
 
-    return $days * 8; // 8 hours to work each day
+    return $hours;
 }
 
 function printHours(string $since, string $until, array $config, float $extraO = 0): float
@@ -259,19 +267,18 @@ function countVacationDays(DateTime $since, DateTime $until, array $config): flo
             break;
         }
         $from = clone $vacation['FROM'];
-        if ($from < $since) {
-            continue;
-        }
+
+
         if (isset($vacation['DAYS'])) {
-            if ($from <= $until) {
+            if ($from >= $since && $from <= $until) {
                 $vacationDays += $vacation['DAYS'] * 8;
             }
             continue;
         }
         while ($from <= $vacation['UNTIL']) {
-            $daysOff = getDaysOff($from, $config['DAYS_OFF'] ?? []);
-            $halfDaysOff = getDaysOff($from, $config['HALF_DAYS_OFF'] ?? []);
-            if ($from <= $until) {
+            if ($from >= $since && $from <= $until) {
+                $daysOff = getDaysOff($from, $config['DAYS_OFF'] ?? []);
+                $halfDaysOff = getDaysOff($from, $config['HALF_DAYS_OFF'] ?? []);
                 $vacationDays += hoursToWorkAtDay($hdays, $halfDays, $daysOff, $halfDaysOff, $from);
             }
             $from->modify('+1 day');
