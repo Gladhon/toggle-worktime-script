@@ -9,8 +9,9 @@ return [
     'START_DATE'            => '',    // optional, 2017 by default, the year you started
     'DAYS_OFF'              => [],       // to configure part time work, weekly  days off, enter the day number for each day as array entry (1 = monday, 2 = tuesday, ...) and the date range config, i.e. [5 => ['FROM' => new \DateTimeImmutable('01.01.2022'), 'UNTIL' => new \DateTimeImmutable()]]
     'HALF_DAYS_OFF'         => [],       // to configure part time work, weekly half days off, enter the day number for each day as array entry (1 = monday, 2 = tuesday, ...) and the date range config, i.e. [5 => ['FROM' => new \DateTimeImmutable('01.01.2022'), 'UNTIL' => new \DateTimeImmutable()]]
+//    'WORKING_HOURS' => [['FROM' => new \DateTimeImmutable('01.01.2025'), 'UNTIL' => new \DateTimeImmutable('01.01.2026'), 'VALUE' => 8*0.8]], // 80% worktime
     'VACATION_DAYS_AMOUNT'  => 5*5,     // 5 weeks à 5 days
-    'VACATION'              => [    // one entry for each year
+//    'VACATION'              => [    // one entry for each year
                                     2020 => [
                                         [   // one entry for each vacation in year
                                             'FROM' => null,  //Datetime, e.g.new DateTime('1-1-2020');

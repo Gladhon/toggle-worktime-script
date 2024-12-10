@@ -269,10 +269,18 @@ function countVacationDays(DateTime $since, DateTime $until, array $config): flo
         }
         $from = clone $vacation['FROM'];
 
+        $hoursPerDay = 8;
+        if(isset($config['WORKING_HOURS'])){
+            foreach ($config['WORKING_HOURS']as $workingDayConfig) {
+                if($from >= $workingDayConfig['FROM'] && $from <= $workingDayConfig['UNTIL']){
+                    $hoursPerDay = $workingDayConfig['VALUE'];
+                }
+            }
+        }
 
         if (isset($vacation['DAYS'])) {
             if ($from >= $since && $from <= $until) {
-                $vacationDays += $vacation['DAYS'] * 8;
+                $vacationDays += $vacation['DAYS'] * $hoursPerDay;
             }
             continue;
         }
@@ -280,7 +288,7 @@ function countVacationDays(DateTime $since, DateTime $until, array $config): flo
             if ($from >= $since && $from <= $until) {
                 $daysOff = getDaysOff($from, $config['DAYS_OFF'] ?? []);
                 $halfDaysOff = getDaysOff($from, $config['HALF_DAYS_OFF'] ?? []);
-                $vacationDays += hoursToWorkAtDay($hdays, $halfDays, $daysOff, $halfDaysOff, $from);
+                $vacationDays += hoursToWorkAtDay($hdays, $halfDays, $daysOff, $halfDaysOff, $from, $hoursPerDay);
             }
             $from->modify('+1 day');
         }
@@ -289,7 +297,7 @@ function countVacationDays(DateTime $since, DateTime $until, array $config): flo
     return $vacationDays;
 }
 
-function hoursToWorkAtDay(array $holidays, array $halfHolidays, array $daysOff, array $halfDaysOff, DateTime $day)
+function hoursToWorkAtDay(array $holidays, array $halfHolidays, array $daysOff, array $halfDaysOff, DateTime $day, float $hoursPerDay): float
 {
     $daysOff[] = 0;
     $daysOff[] = 6;
@@ -304,14 +312,14 @@ function hoursToWorkAtDay(array $holidays, array $halfHolidays, array $daysOff, 
     }
 
     // 8 hours to work on a "normal" day
-    $hours = 8;
+    $hours = $hoursPerDay;
     if (in_array($day->getTimestamp(), $halfHolidays, true)) {
         // 4 hours to work on a half a public holiday
-        $hours -= 4;
+        $hours -= $hoursPerDay/2;
     }
     if (in_array($day->getTimestamp(), $halfDaysOff, true)) {
         // no hours to work on a half day off on a half public holiday
-        $hours -= 4;
+        $hours -= $hoursPerDay/2;
     }
 
     return $hours;
@@ -420,3 +428,38 @@ if(($_SERVER['argv'][1] ?? '') === '--debug'){
       $day->modify('+1 day');
     }
 }
+
+if($config['EMAIL'] === 'marc@gotom.io'){
+
+$von = '29.07.2024';
+$bis = '31.08.2024';
+$o = printHours($von, $bis, $config);
+$t = totalHours(new \DateTime($von), new \DateTime($bis), $config);
+$w = hoursToWork(new \DateTime($von), new \DateTime($bis), $config);
+printf("%01.2fh / %01.2fh = %01.2f%% \n\n", $t, $w, $t / $w * 100);
+
+$von = '19.09.2024';
+$bis = '31.10.2024';
+$o = printHours($von, $bis, $config);
+$t = totalHours(new \DateTime($von), new \DateTime($bis), $config);
+$w = hoursToWork(new \DateTime($von), new \DateTime($bis), $config);
+printf("%01.2fh / %01.2fh = %01.2f%% \n\n", $t, $w, $t / $w * 100);
+
+
+$von = '01.11.2024';
+$bis = 'yesterday';
+$o = printHours($von, $bis, $config);
+$v = countVacationDays(new \DateTime($von), new \DateTime($bis), $config);
+$t = totalHours(new \DateTime($von), new \DateTime($bis), $config);
+$w = hoursToWork(new \DateTime($von), new \DateTime($bis), $config);
+printf("%01.2fh / %01.2fh = %01.2f%% \n\n", $t, $w - $v, $t / ($w - $v) * 100);
+
+}
+
+/**
+ * 01.01.2023 - 31.12.2023:
+ * 1523.11 - 2000.00 + 520.00 = 43.11
+ *
+ * 01.01.2024 - yesterday:
+ * 289.50 - 424.00 + 128.00 = -6.50
+ */
