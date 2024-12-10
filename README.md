@@ -16,3 +16,10 @@ Setup
  * add following line at bottom: `alias wt="php ~/Projects/toggle-worktime-script/worktime.php"`
  * reload .bashrc: `source ~/.bashrc`
  * launch script: `wt`
+
+Run
+-----
+ * launch script: `wt`
+ * dump all vacation entries: `wt --dump`
+ * debug every week this year `wt --debug`
+
