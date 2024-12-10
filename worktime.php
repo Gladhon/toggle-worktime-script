@@ -138,6 +138,7 @@ function getUserInfos($user = null): array
         }
 
     }
+
     if(($_SERVER['argv'][1] ?? '') === '--dump'){
         foreach ($config['VACATION'] as $year => $yearConfig) {
             if ($yearConfig[0] === 'sum') {
@@ -378,6 +379,7 @@ if (getenv('GOTOM_USER') === 'ALL') {
 
 $config = getUserInfos();
 
+
 printHours('today', 'today', $config);
 printHours('yesterday', 'yesterday', $config);
 printHours('last Sunday -1 week', 'last Sunday -1 week +6 days', $config);
@@ -404,3 +406,17 @@ printf("%01.2f \n\n", $total);
 
 printf("Overall: %01.2fh / %01.2fd \n\n", $total, $total / 8);
 
+if(($_SERVER['argv'][1] ?? '') === '--debug'){
+    $start = '01.01.'.$thisYear;
+    if (new DateTimeImmutable($config['START_DATE']) > new DateTimeImmutable($start)) {
+        $start = $config['START_DATE'];
+    }
+    $day = new DateTime($start);
+    $day->modify('next monday');
+    while ($day < new DateTime('today')) {
+      $startWeek = $day->format('c');
+      $endWeek = $day->modify('+6 days')->format('c');
+      printHours($startWeek, $endWeek, $config);
+      $day->modify('+1 day');
+    }
+}
