@@ -92,12 +92,11 @@ function getUserInfos($user = null): array
 
         foreach ($calamariRows as $row) {
             $year = substr($row['startTime'], 0, 4);
-
+            $yearEnd = substr($row['endTime'], 0, 4);
             if ($row['absenceTypeName'] === 'Vacation days') {
                 if(!isset($calamariVacAmounts[$year])){
                     $calamariVacAmounts[$year] = 0;
                 }
-                $yearEnd = substr($row['endTime'], 0, 4);
                 if($year === $yearEnd){
                     $calamariVacAmounts[$year] +=  (float) $row['entitlementAmount']  ;
                 }else{
@@ -115,6 +114,9 @@ function getUserInfos($user = null): array
             }
 
             $config['VACATION'][$year][] = $dateItem;
+            if($year !== $yearEnd){
+                $config['VACATION'][$yearEnd][] = $dateItem;
+            }
         }
 
         foreach ($calamariVacAmounts as $year => $calamariVacAmount) {
@@ -447,6 +449,15 @@ printf("%01.2fh / %01.2fh = %01.2f%% \n\n", $t, $w, $t / $w * 100);
 
 
 $von = '01.11.2024';
+$bis = '22.12.2024';
+$o = printHours($von, $bis, $config);
+$v = countVacationDays(new \DateTime($von), new \DateTime($bis), $config);
+$t = totalHours(new \DateTime($von), new \DateTime($bis), $config);
+$w = hoursToWork(new \DateTime($von), new \DateTime($bis), $config);
+printf("%01.2fh / %01.2fh = %01.2f%% \n\n", $t, $w - $v, $t / ($w - $v) * 100);
+
+
+$von = '05.01.2025';
 $bis = 'yesterday';
 $o = printHours($von, $bis, $config);
 $v = countVacationDays(new \DateTime($von), new \DateTime($bis), $config);
