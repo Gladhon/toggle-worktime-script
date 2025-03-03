@@ -86,8 +86,13 @@ function getUserInfos($user = null): array
 
     if ($config['EMAIL'] ?? null) {
         $calamariRows = json_decode(file_get_contents($dataDir.'/calamari.json'), true, 512, JSON_THROW_ON_ERROR);
-        $calamariRows = array_filter($calamariRows, fn($row) => $row['employeeEmail'] === $config['EMAIL'] && $row ['status']=== 'ACCEPTED'
-);
+        $calamariRows = array_filter($calamariRows, function($row) use ($config)  {
+          if(in_array($row['id'], [986,856,801])){
+            return false;
+          }
+           $row['employeeEmail']  = preg_replace('/(.+)(\+.*)(@.+)/', '$1$3',$row['employeeEmail']);
+           return $row['employeeEmail'] === $config['EMAIL'] && $row['status']=== 'ACCEPTED';
+        });
         $calamariVacAmounts = [];
 
         foreach ($calamariRows as $row) {
@@ -458,6 +463,14 @@ printf("%01.2fh / %01.2fh = %01.2f%% \n\n", $t, $w - $v, $t / ($w - $v) * 100);
 
 
 $von = '05.01.2025';
+$bis = '15.02.2025';
+$o = printHours($von, $bis, $config);
+$v = countVacationDays(new \DateTime($von), new \DateTime($bis), $config);
+$t = totalHours(new \DateTime($von), new \DateTime($bis), $config);
+$w = hoursToWork(new \DateTime($von), new \DateTime($bis), $config);
+printf("%01.2fh / %01.2fh = %01.2f%% \n\n", $t, $w - $v, $t / ($w - $v) * 100);
+
+$von = '01.03.2025';
 $bis = 'yesterday';
 $o = printHours($von, $bis, $config);
 $v = countVacationDays(new \DateTime($von), new \DateTime($bis), $config);
