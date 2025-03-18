@@ -125,13 +125,13 @@ function getUserInfos($user = null): array
         }
 
         foreach ($calamariVacAmounts as $year => $calamariVacAmount) {
-            echo sprintf("Planned Vacation %d: %04.1f, left: %04.1f\n",$year,$calamariVacAmount, (($config['VACATION_DAYS_AMOUNT'] ?? 25) - $calamariVacAmount));
+            echo sprintf("\nPlanned Vacation %d: %04.1f, left: %04.1f\n",$year,$calamariVacAmount, (($config['VACATION_DAYS_AMOUNT'] ?? 25) - $calamariVacAmount));
         }
 
     }
 
     foreach ($config['VACATION'] as $year => $yearConfig) {
-        if (($yearConfig[0] ?? '') === 'sum') {
+        if (($yearConfig[0] ?? '') === 'sum' || isset($yearConfig['overwrite'])) {
           continue;
         }
         usort($yearConfig, fn($rowA, $rowB) => $rowA['FROM'] <=> $rowB['FROM']);
@@ -264,7 +264,10 @@ function countVacationDays(DateTime $since, DateTime $until, array $config): flo
 
         return array_sum($vacations) * 8;
     }
+    if (isset($vacations['overwrite'] )) {
 
+        return $vacations['overwrite'] * 8 ;
+    }
     $hdays = getHolidays($year);
     $halfDays = getHalfHolidays($year);
     foreach ($config['VACATION'][$year] as $vacation) {
@@ -422,12 +425,13 @@ printf("%01.2f \n\n", $total);
 printf("Overall: %01.2fh / %01.2fd \n\n", $total, $total / 8);
 
 if(($_SERVER['argv'][1] ?? '') === '--debug'){
+
     $start = '01.01.'.$thisYear;
     if (new DateTimeImmutable($config['START_DATE']) > new DateTimeImmutable($start)) {
         $start = $config['START_DATE'];
     }
     $day = new DateTime($start);
-    $day->modify('next monday');
+    $day->modify('last monday');
     while ($day < new DateTime('today')) {
       $startWeek = $day->format('c');
       $endWeek = $day->modify('+6 days')->format('c');
