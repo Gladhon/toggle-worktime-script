@@ -1,6 +1,7 @@
 #!/usr/bin/env php
 <?php
 
+
 function getHolidays(int $year): array
 {
     $easterDate = easter_date($year);
@@ -56,6 +57,17 @@ function getSechselauten($year)
     return $sechselauten;
 }
 
+function getCalamriData($dataDir){
+  $calamariRows = [];
+  foreach (glob($dataDir.'/calamari*.json') as $file) {
+    $rows = json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR);
+    foreach ($rows as $row) {
+      $calamariRows[$row['id']] = $row;
+    }
+  }
+  return $calamariRows;
+}
+
 function getUserInfos($user = null): array
 {
     $user = $user ?? getenv('GOTOM_USER');
@@ -85,7 +97,7 @@ function getUserInfos($user = null): array
 
 
     if ($config['EMAIL'] ?? null) {
-        $calamariRows = json_decode(file_get_contents($dataDir.'/calamari.json'), true, 512, JSON_THROW_ON_ERROR);
+        $calamariRows = getCalamriData($dataDir);
         $calamariRows = array_filter($calamariRows, function($row) use ($config)  {
           if(in_array($row['id'], [986,856,801])){
             return false;
