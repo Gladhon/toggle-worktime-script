@@ -389,9 +389,50 @@ function getDaysOff(\DateTimeInterface $since, array $config): array
     );
 }
 
+function getLastWorkingDay(array $config): DateTime
+{
+    $day = new DateTime('yesterday');
+
+    // half days off / half holidays are still working days, so they don't count here
+    for ($i = 0; $i < 366; $i++) {
+        $w = (int) $day->format('w');
+        $daysOff = getDaysOff($day, $config['DAYS_OFF'] ?? []);
+        $holidays = getHolidays((int) $day->format('Y'));
+
+        if ($w !== 0 && $w !== 6
+            && !in_array($w, $daysOff, true)
+            && !in_array($day->getTimestamp(), $holidays, true)
+        ) {
+            return $day;
+        }
+
+        $day->modify('-1 day');
+    }
+
+    throw new RuntimeException('Found no working day within the last year.');
+}
+
+$jsonRequested = in_array('--json', $_SERVER['argv'] ?? [], true)
+    || (($_GET['json'] ?? null) === '1');
+
+if ($jsonRequested) {
+    // Buffer the human readable report so it can be dropped before the JSON body is written.
+    ob_start();
+    set_exception_handler(static function (Throwable $e): void {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        header('Content-Type: application/json', true, 500);
+        echo json_encode(['error' => $e->getMessage()])."\n";
+    });
+}
+
 echo "\n";
 
 if (getenv('GOTOM_USER') === 'ALL') {
+    if ($jsonRequested) {
+        throw new RuntimeException('GOTOM_USER=ALL is not supported in combination with --json.');
+    }
     foreach (glob(__DIR__.'/../data/*.php') as $file) {
         $matches = [];
         preg_match_all('|'.__DIR__.'/../data/(.*).php|', $file, $matches);
@@ -410,8 +451,8 @@ if (getenv('GOTOM_USER') === 'ALL') {
 $config = getUserInfos();
 
 
-printHours('today', 'today', $config);
-printHours('yesterday', 'yesterday', $config);
+$workedToday = printHours('today', 'today', $config);
+$workedYesterday = printHours('yesterday', 'yesterday', $config);
 printHours('last Sunday -1 week', 'last Sunday -1 week +6 days', $config);
 printHours('last Sunday -2 week', 'last Sunday -2 week +6 days', $config);
 
@@ -429,6 +470,29 @@ for ($year = $startYear; $year <= $thisYear; $year++) {
     } else {
         $total += printHours('01.01.'.$year, '31.12.'.$year, $config, $mod);
     }
+}
+
+if ($jsonRequested) {
+    $lastWorkday = getLastWorkingDay($config);
+    $lastWorkdayBalance = $lastWorkday->format('Y-m-d') === date('Y-m-d', strtotime('yesterday'))
+        ? $workedYesterday // already fetched above, no need to query toggl twice
+        : printHours($lastWorkday->format('Y-m-d'), $lastWorkday->format('Y-m-d'), $config);
+
+    // drop every buffer level, including one a web entry point may have opened
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode([
+        'total_hours'           => round($total, 2),
+        'total_days'            => round($total / 8, 2),
+        'worked_today'          => round($workedToday, 2),
+        'worked_yesterday'      => round($workedYesterday, 2),
+        'last_workday_date'     => $lastWorkday->format('Y-m-d'),
+        'last_workday_balance'  => round($lastWorkdayBalance, 2),
+    ], JSON_THROW_ON_ERROR)."\n";
+    exit;
 }
 
 echo "\nTotal hours: ";
